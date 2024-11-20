@@ -1,0 +1,5 @@
+    install
+npx create-expo@latest .
+
+    reset project
+npm run reset-project
