@@ -3,3 +3,22 @@ npx create-expo@latest .
 
     reset project
 npm run reset-project
+
+    install fonts (github.com/expo/google-fonts)
+npm i @expo-google-fonts/inter
+
+    adding context for theme switch
+adding (./context/ThemeContext)
+wrapping _layout.tsx in ThemeProvider
+
+    adding animationn from react-native-reanimated
+Animate.FlatList
+itemLayoutAnimation={LinearTransition}
+keyboardDismissMode={"on-drag"}
+
+    adding storage (https://docs.expo.dev/develop/user-interface/store-data/)
+npm install @react-native-async-storage/async-storage
+    useEffect to read and update localStorage
+
+    fixing status bar theme colors
+<StatusBar style={colorScheme === "dark" ? "light" : "dark"} />

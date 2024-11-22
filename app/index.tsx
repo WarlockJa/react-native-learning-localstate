@@ -1,7 +1,7 @@
-import { Colors } from "@/app-example/constants/Colors";
+import { Colors } from "@/constants/Colors";
 import { data, TodoItem } from "@/data/todos";
-import { Ionicons } from "@expo/vector-icons";
-import { useState } from "react";
+import { Ionicons, Octicons } from "@expo/vector-icons";
+import { useContext, useEffect, useState } from "react";
 import {
   Appearance,
   ColorSchemeName,
@@ -15,15 +15,23 @@ import {
   TextInput,
   View,
 } from "react-native";
+import { Inter_500Medium, useFonts } from "@expo-google-fonts/inter";
+import { ThemeContext } from "@/context/ThemeContext";
+import Animated, { LinearTransition } from "react-native-reanimated";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { StatusBar } from "expo-status-bar";
 
 export default function Index() {
   // selecting container type based on the platform application runs on
   const Container = Platform.OS === "web" ? ScrollView : SafeAreaView;
 
-  // reading user preferred theme
-  const colorScheme = Appearance.getColorScheme();
-  // getting theme colors
-  const theme = colorScheme === "dark" ? Colors.dark : Colors.light;
+  // // reading user preferred theme
+  // const colorScheme = Appearance.getColorScheme();
+  // // getting theme colors
+  // const theme = colorScheme === "dark" ? Colors.dark : Colors.light;
+  const themeData = useContext(ThemeContext);
+  if (!themeData) return null;
+  const { colorScheme, setColorScheme, theme } = themeData;
 
   // generating styles for the theme
   const styles = createStyles(theme, colorScheme);
@@ -32,11 +40,51 @@ export default function Index() {
   const separatorComp = <View style={styles.separator} />;
 
   // todos local state
-  const [todos, setTodos] = useState<TodoItem[]>(data);
+  const [todos, setTodos] = useState<TodoItem[]>([]);
   // input value state
   const [inputValue, setInputValue] = useState("");
   // flag for update todo mode
   const [selectedTodo, setSelectedTodo] = useState<TodoItem | undefined>();
+
+  // loading font
+  const [loaded, error] = useFonts({
+    Inter_500Medium,
+  });
+
+  // using storage to load data
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const jsonValue = await AsyncStorage.getItem("TodoApp");
+
+        const storageTodos = jsonValue != null ? JSON.parse(jsonValue) : null;
+
+        if (storageTodos && storageTodos.length) {
+          setTodos(storageTodos);
+        } else {
+          setTodos(data);
+        }
+      } catch (error) {
+        console.log("ERROR: ", error);
+      }
+    };
+
+    fetchData();
+  }, [data]);
+
+  // saving data to localStorage
+  useEffect(() => {
+    const storeData = async () => {
+      try {
+        const jsonValue = JSON.stringify(todos);
+        await AsyncStorage.setItem("TodoApp", jsonValue);
+      } catch (error) {
+        console.log(error);
+      }
+    };
+
+    storeData();
+  }, [todos]);
 
   // add new todo handler
   const handleAddTodo = () => {
@@ -100,9 +148,11 @@ export default function Index() {
     setSelectedTodo(undefined);
   };
 
+  if (!loaded && !error) return null;
+
   return (
     <Container style={styles.contentContainer}>
-      <Container style={styles.todoListInputArea}>
+      <View style={styles.todoListInputArea}>
         <TextInput
           style={styles.todoListInput}
           value={inputValue}
@@ -113,7 +163,7 @@ export default function Index() {
           multiline
         />
         {selectedTodo ? (
-          <Container style={styles.todoListUpdateButtons}>
+          <View style={styles.todoListUpdateButtons}>
             <Pressable
               style={styles.todoListAddButton}
               onPress={handleUpdateTodo}
@@ -126,19 +176,47 @@ export default function Index() {
             >
               <Text style={styles.todoListAddButtonText}>Cancel</Text>
             </Pressable>
-          </Container>
+          </View>
         ) : (
-          <Pressable style={styles.todoListAddButton} onPress={handleAddTodo}>
-            <Text style={styles.todoListAddButtonText}>Add</Text>
-          </Pressable>
+          <View style={styles.todoListUpdateButtons}>
+            <Pressable style={styles.todoListAddButton} onPress={handleAddTodo}>
+              <Text style={styles.todoListAddButtonText}>Add</Text>
+            </Pressable>
+            <Pressable
+              onPress={() =>
+                setColorScheme(colorScheme === "light" ? "dark" : "light")
+              }
+              style={{ marginLeft: 10 }}
+            >
+              {colorScheme === "dark" ? (
+                <Octicons
+                  name="moon"
+                  size={36}
+                  color={theme.text}
+                  selectable={undefined}
+                  style={{ width: 36 }}
+                />
+              ) : (
+                <Octicons
+                  name="sun"
+                  size={36}
+                  color={theme.text}
+                  selectable={undefined}
+                  style={{ width: 36 }}
+                />
+              )}
+            </Pressable>
+          </View>
         )}
-      </Container>
-      <FlatList
+      </View>
+      <Animated.FlatList
         data={todos.sort((a, b) => b.id - a.id)}
         keyExtractor={(item) => item.id.toString()}
         ItemSeparatorComponent={() => separatorComp}
+        itemLayoutAnimation={LinearTransition}
+        keyboardDismissMode={"on-drag"}
         renderItem={(item) => (
-          <Container
+          <View
             style={[
               styles.todoListRow,
               item.item.id === selectedTodo?.id
@@ -146,7 +224,7 @@ export default function Index() {
                 : null,
             ]}
           >
-            <Container style={styles.todoListTextRow}>
+            <View style={styles.todoListTextRow}>
               <Pressable
                 onLongPress={() => handleTodoSelect(item.item)}
                 onPress={() => handleChangeTodoStatus(item.item)}
@@ -160,13 +238,14 @@ export default function Index() {
                   {item.item.title}
                 </Text>
               </Pressable>
-            </Container>
+            </View>
             <Pressable onPress={() => handleDeleteTodo(item.item)}>
               <Ionicons name="trash" size={24} style={styles.deleteIcon} />
             </Pressable>
-          </Container>
+          </View>
         )}
-      ></FlatList>
+      />
+      <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
     </Container>
   );
 }
@@ -179,7 +258,8 @@ function createStyles(
     contentContainer: {
       backgroundColor: theme.background,
       paddingVertical: 8,
-      paddingBottom: 60,
+      paddingTop: 28,
+      overflow: "scroll",
     },
     separator: {
       height: 1,
@@ -190,7 +270,7 @@ function createStyles(
       flexDirection: "row",
       width: "100%",
       paddingHorizontal: 8,
-      overflow: "hidden",
+      borderWidth: 8,
     },
     todoListTextRow: {
       width: "65%",
@@ -201,6 +281,7 @@ function createStyles(
     todoListItemText: {
       color: theme.text,
       fontSize: 18,
+      fontFamily: "Inter_500Medium",
     },
     todoListItemDone: {
       textDecorationLine: "line-through",
@@ -221,6 +302,7 @@ function createStyles(
       marginHorizontal: 8,
     },
     todoListInput: {
+      width: "70%",
       flexGrow: 1,
       borderWidth: 1,
       borderColor: theme.text,
@@ -228,7 +310,7 @@ function createStyles(
       borderRadius: 8,
       fontSize: 18,
       padding: 8,
-      maxWidth: "75%",
+      fontFamily: "Inter_500Medium",
     },
     todoListAddButton: {
       borderRadius: 8,

@@ -1,4 +1,5 @@
 import { Colors } from "@/app-example/constants/Colors";
+import { ThemeProvider } from "@/context/ThemeContext";
 import { useFonts } from "expo-font";
 import { SplashScreen, Stack } from "expo-router";
 import { useEffect } from "react";
@@ -29,20 +30,22 @@ export default function RootLayout() {
   }
 
   return (
-    <SafeAreaProvider>
-      <Stack
-        screenOptions={{
-          headerStyle: { backgroundColor: theme.headerBackground },
-          headerTintColor: theme.text,
-          headerShadowVisible: false,
-          headerShown: false,
-        }}
-      >
-        {/* <Stack.Screen
+    <ThemeProvider>
+      <SafeAreaProvider>
+        <Stack
+          screenOptions={{
+            headerStyle: { backgroundColor: theme.headerBackground },
+            headerTintColor: theme.text,
+            headerShadowVisible: false,
+            headerShown: false,
+          }}
+        >
+          {/* <Stack.Screen
           name="index"
           options={{ title: "Home", headerShown: false }}
         /> */}
-      </Stack>
-    </SafeAreaProvider>
+        </Stack>
+      </SafeAreaProvider>
+    </ThemeProvider>
   );
 }
