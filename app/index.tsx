@@ -20,6 +20,7 @@ import { ThemeContext } from "@/context/ThemeContext";
 import Animated, { LinearTransition } from "react-native-reanimated";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { StatusBar } from "expo-status-bar";
+import { useRouter } from "expo-router";
 
 export default function Index() {
   // selecting container type based on the platform application runs on
@@ -45,6 +46,9 @@ export default function Index() {
   const [inputValue, setInputValue] = useState("");
   // flag for update todo mode
   const [selectedTodo, setSelectedTodo] = useState<TodoItem | undefined>();
+
+  // router
+  const router = useRouter();
 
   // loading font
   const [loaded, error] = useFonts({
@@ -148,6 +152,11 @@ export default function Index() {
     setSelectedTodo(undefined);
   };
 
+  // nacigating to todo dynamic page
+  const handlePress = (id: number) => {
+    router.push(`/todos/${id}`);
+  };
+
   if (!loaded && !error) return null;
 
   return (
@@ -178,7 +187,7 @@ export default function Index() {
             </Pressable>
           </View>
         ) : (
-          <View style={styles.todoListUpdateButtons}>
+          <View style={styles.todoListAddButtons}>
             <Pressable style={styles.todoListAddButton} onPress={handleAddTodo}>
               <Text style={styles.todoListAddButtonText}>Add</Text>
             </Pressable>
@@ -186,7 +195,8 @@ export default function Index() {
               onPress={() =>
                 setColorScheme(colorScheme === "light" ? "dark" : "light")
               }
-              style={{ marginLeft: 10 }}
+              // style={{ marginLeft: 10 }}
+              style={styles.todoListThemeSwitchButton}
             >
               {colorScheme === "dark" ? (
                 <Octicons
@@ -215,31 +225,30 @@ export default function Index() {
         ItemSeparatorComponent={() => separatorComp}
         itemLayoutAnimation={LinearTransition}
         keyboardDismissMode={"on-drag"}
-        renderItem={(item) => (
+        renderItem={({ item }) => (
           <View
             style={[
               styles.todoListRow,
-              item.item.id === selectedTodo?.id
-                ? styles.selectedTodoItem
-                : null,
+              item.id === selectedTodo?.id ? styles.selectedTodoItem : null,
             ]}
           >
             <View style={styles.todoListTextRow}>
               <Pressable
-                onLongPress={() => handleTodoSelect(item.item)}
-                onPress={() => handleChangeTodoStatus(item.item)}
+                onLongPress={() => handleChangeTodoStatus(item)}
+                // onPress={() => handleTodoSelect(item)}
+                onPress={() => handlePress(item.id)}
               >
                 <Text
                   style={[
                     styles.todoListItemText,
-                    item.item.completed ? styles.todoListItemDone : null,
+                    item.completed ? styles.todoListItemDone : null,
                   ]}
                 >
-                  {item.item.title}
+                  {item.title}
                 </Text>
               </Pressable>
             </View>
-            <Pressable onPress={() => handleDeleteTodo(item.item)}>
+            <Pressable onPress={() => handleDeleteTodo(item)}>
               <Ionicons name="trash" size={24} style={styles.deleteIcon} />
             </Pressable>
           </View>
@@ -302,7 +311,7 @@ function createStyles(
       marginHorizontal: 8,
     },
     todoListInput: {
-      width: "70%",
+      width: "68%",
       flexGrow: 1,
       borderWidth: 1,
       borderColor: theme.text,
@@ -322,8 +331,16 @@ function createStyles(
       color: theme.background,
       fontSize: 18,
     },
+    todoListThemeSwitchButton: {
+      justifyContent: "center",
+      paddingHorizontal: 4,
+    },
     todoListUpdateButtons: {
       flexDirection: "column",
+    },
+    todoListAddButtons: {
+      flexDirection: "row",
+      gap: 2,
     },
     selectedTodoItem: {
       // backgroundColor: colorScheme === "dark" ? "#696969" : "#000",

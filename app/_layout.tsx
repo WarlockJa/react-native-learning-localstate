@@ -40,10 +40,8 @@ export default function RootLayout() {
             headerShown: false,
           }}
         >
-          {/* <Stack.Screen
-          name="index"
-          options={{ title: "Home", headerShown: false }}
-        /> */}
+          <Stack.Screen name="index" />
+          <Stack.Screen name="todos/[id]" />
         </Stack>
       </SafeAreaProvider>
     </ThemeProvider>

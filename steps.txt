@@ -22,3 +22,9 @@ npm install @react-native-async-storage/async-storage
 
     fixing status bar theme colors
 <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
+
+    Dynamic Routing
+adding <Stack.Screen name="todos/[id]" /> to layout stacks
+adding todos/[id].tsx
+    reading params inside dynamic route
+const { id } = useLocalSearchParams();
