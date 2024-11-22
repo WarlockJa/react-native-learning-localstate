@@ -78,7 +78,7 @@ export default function EditScreen() {
         await AsyncStorage.setItem("TodoApp", JSON.stringify([savedTodo]));
       }
 
-      router.push("/");
+      router.back();
     } catch (error) {
       console.log(error);
     }
@@ -128,7 +128,7 @@ export default function EditScreen() {
           <Text style={styles.saveButtonText}>Save</Text>
         </Pressable>
         <Pressable
-          onPress={() => router.push("/")}
+          onPress={() => router.back()}
           style={[
             styles.saveButton,
             { backgroundColor: theme.deleteIconBackground },
